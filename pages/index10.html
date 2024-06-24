@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diffuse Material_uniform_scattor</title>
+</head>
+
+<body>
+    <canvas id='canvas' style="width: 600px; height:400px;"></canvas>
+    <script type="module">
+        import { Camera, Point, Color, Ray, Vec3, util, Sphere, HittableList } from '../lib/index'
+        let a_max = 0;
+
+        let canvas = document.querySelector('#canvas')
+        var width = canvas.clientWidth;
+        var height = canvas.clientHeight;
+        canvas.width = width;
+        canvas.height = height;
+
+        var ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "rgba(0,0,0,1.0)";
+        ctx.fillRect(0, 0, width, height);
+
+        let camera = new Camera(width, height)
+        camera.lookAt(new Point(0, 0, 10), new Point(0, 0, 0))
+
+        /**
+         * multisamples 
+         */
+        const samplesPerPixel = 10;
+        /**
+         * max recursive depth
+         */
+        const maxDepth = 50;
+
+        console.log("start!")
+
+        let hittableList = new HittableList()
+        hittableList.add(new Sphere(new Point(0, 0, 2), 2))
+        hittableList.add(new Sphere(new Point(0, -102, 2), 100))
+
+        let imageData = render(camera, hittableList)
+        ctx.putImageData(imageData, 0, 0);
+        console.log("done!")
+
+        function render(camera, hittableList) {
+            var pixels = new Array(width * height * 4)
+            let offset = 0, ray = null;
+            for (var j = height - 1; j >= 0; j--) {
+                for (var i = 0; i < width; i++) {
+                    let colors = [];
+                    //multisamples per pixel
+                    for (let s = 0; s < samplesPerPixel; s++) {
+                        const v = (j + util.rand() - 0.5) / (height - 1);
+                        const u = (i + util.rand() - 0.5) / (width - 1);
+                        ray = camera.getRay(u, v);
+                        let tempColor = rayColor(ray, hittableList, maxDepth);
+                        colors.push(tempColor)
+                    }
+                    let color = Color.average(colors);
+
+                    pixels[offset + 0] = color.r * 255;
+                    pixels[offset + 1] = color.g * 255;
+                    pixels[offset + 2] = color.b * 255;
+                    pixels[offset + 3] = 255;
+                    offset += 4
+                }
+            }
+            return new ImageData(new Uint8ClampedArray(pixels), width, height)
+        }
+
+
+        function rayColor(ray, hittableList, depth) {
+            // If we've exceeded the ray bounce limit, no more light is gathered.
+            if (depth <= 0)
+                return new Color(0, 0, 0);
+
+            let result = hittableList.hit(ray, 0.001, Number.POSITIVE_INFINITY);
+            if (result) {
+                let direction = Vec3.randOnHemisphere(result.normal);
+                let rc = rayColor(new Ray(result.position, direction), hittableList, depth - 1);//
+                return rc.scale(0.5);
+            }
+
+            let a = 0.5 * (ray.direction.y + 1.0);
+            return Color.interpolate(new Color(1, 1, 1), new Color(0.5, 0.7, 1.0), a)
+        }
+
+
+    </script>
+
+</body>
+
+</html>

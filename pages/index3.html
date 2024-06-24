@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ray-Sphere</title>
+</head>
+
+<body>
+    <canvas id='canvas' style="width: 600px; height:400px;"></canvas>
+    <script type="module">
+        import { Camera, Point, Color, Ray, Vec3 } from '../lib/index'
+        let a_max = 0;
+
+        let canvas = document.querySelector('#canvas')
+        var width = canvas.clientWidth;
+        var height = canvas.clientHeight;
+        canvas.width = width;
+        canvas.height = height;
+
+        var ctx = canvas.getContext("2d", {
+            alpha: true
+        });
+
+        console.log('width,height', width, height)
+
+        let camera = new Camera(width, height)
+        camera.lookAt(new Point(0, 0, 10), new Point(0, 0, 0))
+
+        ctx.fillStyle = "rgba(0,0,0,1.0)";
+        ctx.fillRect(0, 0, width, height);
+
+        var pixels = new Array(width * height * 4)
+        let offset = 0, ray = null;
+        for (var j = height - 1; j >= 0; j--) {
+            const v = j / height;
+
+            for (var i = 0; i < width; i++) {
+                const u = i / width;
+                ray = camera.getRay(u, v);
+                let color = rayColor(ray);
+                if (color.r == 1.0) {
+                    // console.log(u, v)
+                }
+                pixels[offset + 0] = color.r * 255;
+                pixels[offset + 1] = color.g * 255;
+                pixels[offset + 2] = color.b * 255;
+                pixels[offset + 3] = 255;
+
+                offset += 4
+            }
+        }
+
+        let imageData = new ImageData(new Uint8ClampedArray(pixels), width, height)
+        ctx.putImageData(imageData, 0, 0);
+
+        // let ray = camera.getRay(0.5, 0.5);
+        // let color = rayColor(ray);
+        // console.log(pixels)
+
+        function hitSphere(center, radius, r) {
+            let oc = center.subtract(r.origin);
+            let a = r.direction.dot(r.direction);
+            let b = - 2.0 * r.direction.dot(oc);
+            let c = oc.dot(oc) - radius * radius;
+            let discriminant = b * b - 4 * a * c;
+            return (discriminant >= 0);
+        }
+
+        function rayColor(ray) {
+            if (hitSphere(new Point(0, 0, 2), 1, ray)) {
+                return new Color(1, 0, 0);
+            }
+
+            let a = 0.5 * (ray.direction.y + 1.0);
+            let color = Color.interpolate(new Color(1, 1, 1), new Color(0.5, 0.7, 1.0), a)
+            return color;
+        }
+
+
+        console.log(a_max)
+    </script>
+
+</body>
+
+</html>
