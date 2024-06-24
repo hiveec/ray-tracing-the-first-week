@@ -1,5 +1,5 @@
 # raytracing-the-first-week
-
+just for learning 
 based on [raytracing.github.io/books/RayTracingInOneWeekend.html](https://raytracing.github.io/books/RayTracingInOneWeekend.html)-*Version 4.0.0-alpha.2*
 
 
